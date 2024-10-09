@@ -100,10 +100,11 @@ $totalPages = ceil($totalOrders / $limit);  // Calculate total pages
             padding: 10px 20px;
             font-weight: bold;
             border-radius: 25px;
-            transition: background-color 0.3s, transform 0.3s;
+            transition: background-color 0.3s, color 0.3s, transform 0.3s;
         }
         .btn-custom:hover {
-            background-color: #1A242F; /* Darker shade on hover */
+            background-color: #FFC20E; /* Change to yellow on hover */
+            color: #34495E; /* Dark blue-gray text color */
             transform: translateY(-2px); /* Slight lift effect */
         }
     </style>

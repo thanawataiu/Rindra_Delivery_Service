@@ -46,11 +46,12 @@ $orders = $admin->getOrders();
         }
         .container {
             margin-top: 40px;
-            padding: 20px;
+            padding: 30px;
             background-color: #fff;
             border-radius: 15px;
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2), 0 0 10px #FFC20E;
             transition: transform 0.3s, box-shadow 0.3s;
+            max-width: 90%;
         }
         .container:hover {
             transform: translateY(-5px);
@@ -58,49 +59,43 @@ $orders = $admin->getOrders();
         }
         .welcome-text {
             color: #2C3E50;
-            margin-bottom: 20px;
-            font-size: 24px;
+            margin-bottom: 30px;
+            font-size: 28px;
             text-align: center;
-        }
-        .table {
-            border-radius: 10px;
-            overflow: hidden;
-            margin-top: 20px;
-            width: 100%;
-        }
-        .table thead {
-            background-color: #DC8449;
-            color: white;
-        }
-        .table-hover tbody tr:hover {
-            background-color: #f5f5f5;
-        }
-        .table th, .table td {
-            text-align: center;
-            vertical-align: middle;
-            color: #2C3E50;
         }
         .btn-custom {
             background-color: #2C3E50;
             border: none;
             color: white;
-            margin-right: 10px;
+            margin: 10px;
             font-weight: bold;
             border-radius: 25px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 0 5px #FFC20E;
             transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s, color 0.3s;
+            padding: 10px 20px;
+            font-size: 14px; /* Make the buttons smaller */
         }
-
         .btn-custom:hover {
             background-color: #FFC20E;
             color: #2C3E50;
             transform: translateY(-2px);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3), 0 0 7px #FFC20E;
         }
-
+        .btn-group {
+            display: flex;
+            justify-content: center; /* Center the button group */
+            margin-bottom: 20px;
+        }
         .badge {
             padding: 5px 10px;
             font-size: 14px;
+        }
+        .alert {
+            margin-top: 20px;
+        }
+        .pagination {
+            justify-content: center;
+            margin-top: 20px;
         }
     </style>
     <title>Admin Dashboard - Rindra Delivery Service</title>
@@ -122,12 +117,14 @@ $orders = $admin->getOrders();
     <div class="container">
         <h2 class="welcome-text">Welcome, Admin! Manage the orders below:</h2>
         
-        <div class="mb-3 text-right">
+        <!-- Button Group -->
+        <div class="btn-group">
             <a href="create_order.php" class="btn btn-custom">Create Order</a>
             <a href="assign_driver.php" class="btn btn-custom">Assign Driver</a>
             <a href="view_order_history.php" class="btn btn-custom">View Order History</a>
         </div>
 
+        <!-- Orders Table -->
         <?php if (empty($orders)) : ?>
             <div class="alert alert-warning text-center">No orders found.</div>
         <?php else : ?>
@@ -149,11 +146,11 @@ $orders = $admin->getOrders();
                     $counter = 1; // For numbering the rows
                     foreach ($orders as $order): ?>
                         <tr>
-                            <td><?= $counter++; ?></td> <!-- Order Number -->
+                            <td><?= $counter++; ?></td>
                             <td><?= $order['id']; ?></td>
                             <td><?= $order['client_id']; ?></td>
                             <td><?= $order['address']; ?></td>
-                            <td><?= date('Y-m-d', strtotime($order['created_at'])); ?></td> <!-- Display order date -->
+                            <td><?= date('Y-m-d', strtotime($order['created_at'])); ?></td>
                             <td>
                                 <?php
                                     $status = $order['status'];
@@ -177,8 +174,8 @@ $orders = $admin->getOrders();
                             </td>
                             <td><?= $order['driver_id'] ?: 'Not Assigned'; ?></td>
                             <td>
-                                <a href="edit_order.php?id=<?= $order['id']; ?>" class="btn btn-sm btn-primary">Modify</a> <!-- Modify Button -->
-                                <a href="delete_order.php?id=<?= $order['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this order?')">Delete</a> <!-- Delete Button -->
+                                <a href="edit_order.php?id=<?= $order['id']; ?>" class="btn btn-sm btn-primary">Modify</a>
+                                <a href="delete_order.php?id=<?= $order['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this order?')">Delete</a>
                             </td>
                         </tr>
                     <?php endforeach; ?>

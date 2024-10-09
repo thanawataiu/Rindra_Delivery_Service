@@ -64,6 +64,130 @@ class Admin {
         return false;
     }
 
+    // Get Filtered Orders (search and filter with pagination)
+    public function getFilteredOrders($clientName = '', $status = '', $driverId = '', $limit = 10, $offset = 0) {
+        try {
+            $query = "SELECT o.*, u.name AS client_name FROM orders o 
+                      JOIN users u ON o.client_id = u.id WHERE 1=1";
+            
+            // Apply filters
+            if (!empty($clientName)) {
+                $query .= " AND u.name LIKE :client_name";
+            }
+            if (!empty($status)) {
+                $query .= " AND o.status = :status";
+            }
+            if (!empty($driverId)) {
+                $query .= " AND o.driver_id = :driver_id";
+            }
+
+            // Add pagination
+            $query .= " LIMIT :limit OFFSET :offset";
+
+            $stmt = $this->conn->prepare($query);
+
+            // Bind values
+            if (!empty($clientName)) {
+                $stmt->bindValue(':client_name', '%' . $clientName . '%');
+            }
+            if (!empty($status)) {
+                $stmt->bindValue(':status', $status);
+            }
+            if (!empty($driverId)) {
+                $stmt->bindValue(':driver_id', $driverId);
+            }
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $exception) {
+            echo "Error fetching filtered orders: " . $exception->getMessage();
+        }
+        return [];
+    }
+
+    // Get Total Filtered Orders Count (for pagination)
+    public function getTotalFilteredOrders($clientName = '', $status = '', $driverId = '') {
+        try {
+            $query = "SELECT COUNT(*) as total FROM orders o 
+                      JOIN users u ON o.client_id = u.id WHERE 1=1";
+            
+            // Apply filters
+            if (!empty($clientName)) {
+                $query .= " AND u.name LIKE :client_name";
+            }
+            if (!empty($status)) {
+                $query .= " AND o.status = :status";
+            }
+            if (!empty($driverId)) {
+                $query .= " AND o.driver_id = :driver_id";
+            }
+
+            $stmt = $this->conn->prepare($query);
+
+            // Bind values
+            if (!empty($clientName)) {
+                $stmt->bindValue(':client_name', '%' . $clientName . '%');
+            }
+            if (!empty($status)) {
+                $stmt->bindValue(':status', $status);
+            }
+            if (!empty($driverId)) {
+                $stmt->bindValue(':driver_id', $driverId);
+            }
+
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $result['total'];
+        } catch (PDOException $exception) {
+            echo "Error fetching total filtered orders: " . $exception->getMessage();
+        }
+        return 0;
+    }
+
+    // Get Pending Orders (for assigning drivers)
+    public function getPendingOrders() {
+        try {
+            $query = "SELECT o.*, u.name AS client_name FROM orders o 
+                      JOIN users u ON o.client_id = u.id 
+                      WHERE o.driver_id IS NULL AND o.status = 'pending'";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $exception) {
+            echo "Error fetching pending orders: " . $exception->getMessage();
+        }
+        return [];
+    }
+
+    // Get Total Orders Count (useful for pagination)
+    public function getTotalOrdersCount() {
+        try {
+            $query = "SELECT COUNT(*) as total FROM orders";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $result['total'];
+        } catch (PDOException $exception) {
+            echo "Error fetching total orders count: " . $exception->getMessage();
+        }
+        return 0;
+    }
+
+    // Get All Drivers (for dropdown in filter)
+    public function getAllDrivers() {
+        try {
+            $query = "SELECT id, name FROM users WHERE role = 'driver'";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $exception) {
+            echo "Error fetching drivers: " . $exception->getMessage();
+        }
+        return [];
+    }
+
     // Get Order by ID (for editing)
     public function getOrderById($order_id) {
         try {
@@ -108,104 +232,5 @@ class Admin {
             echo "Error deleting order: " . $exception->getMessage();
         }
         return false;
-    }
-
-    // Get All Drivers (for dropdown in filter)
-    public function getAllDrivers() {
-        try {
-            $query = "SELECT id, name FROM users WHERE role = 'driver'";
-            $stmt = $this->conn->prepare($query);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $exception) {
-            echo "Error fetching drivers: " . $exception->getMessage();
-        }
-        return [];
-    }
-
-    // Get Client Name by Client ID
-    public function getClientNameById($client_id) {
-        try {
-            $query = "SELECT name FROM users WHERE id = :client_id";
-            $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(':client_id', $client_id);
-            $stmt->execute();
-            return $stmt->fetch(PDO::FETCH_ASSOC);
-        } catch (PDOException $exception) {
-            echo "Error fetching client name: " . $exception->getMessage();
-        }
-        return null;
-    }
-
-    // Get Filtered Orders (search and filter with pagination)
-    public function getFilteredOrders($clientName = '', $status = '', $driverId = '', $limit = 10, $offset = 0) {
-        try {
-            $query = "SELECT o.*, u.name AS client_name FROM orders o 
-                      JOIN users u ON o.client_id = u.id WHERE 1=1";  // Base query with join
-            
-            // Apply filters
-            if (!empty($clientName)) {
-                $query .= " AND u.name LIKE :client_name";
-            }
-            if (!empty($status)) {
-                $query .= " AND o.status = :status";
-            }
-            if (!empty($driverId)) {
-                $query .= " AND o.driver_id = :driver_id";
-            }
-
-            // Add pagination
-            $query .= " LIMIT :limit OFFSET :offset";
-
-            $stmt = $this->conn->prepare($query);
-
-            // Bind values
-            if (!empty($clientName)) {
-                $stmt->bindValue(':client_name', '%' . $clientName . '%');
-            }
-            if (!empty($status)) {
-                $stmt->bindValue(':status', $status);
-            }
-            if (!empty($driverId)) {
-                $stmt->bindValue(':driver_id', $driverId);
-            }
-            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $exception) {
-            echo "Error fetching filtered orders: " . $exception->getMessage();
-        }
-        return [];
-    }
-
-    // Get Pending Orders (for assigning drivers)
-    public function getPendingOrders() {
-        try {
-            $query = "SELECT o.*, u.name AS client_name FROM orders o 
-                      JOIN users u ON o.client_id = u.id 
-                      WHERE o.driver_id IS NULL AND o.status = 'pending'";
-            $stmt = $this->conn->prepare($query);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $exception) {
-            echo "Error fetching pending orders: " . $exception->getMessage();
-        }
-        return [];
-    }
-
-    // Get Total Orders Count (useful for pagination)
-    public function getTotalOrdersCount() {
-        try {
-            $query = "SELECT COUNT(*) as total FROM orders";
-            $stmt = $this->conn->prepare($query);
-            $stmt->execute();
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $result['total'];
-        } catch (PDOException $exception) {
-            echo "Error fetching total orders count: " . $exception->getMessage();
-        }
-        return 0;
     }
 }

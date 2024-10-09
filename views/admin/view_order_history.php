@@ -29,7 +29,7 @@ $filterDriver = isset($_GET['driver']) ? $_GET['driver'] : '';
 $orderHistory = $admin->getFilteredOrders($searchClient, $filterStatus, $filterDriver, $limit, $offset);
 
 // Fetch total filtered orders to calculate pagination
-$totalOrders = count($admin->getFilteredOrders($searchClient, $filterStatus, $filterDriver)); 
+$totalOrders = $admin->getTotalFilteredOrders($searchClient, $filterStatus, $filterDriver); 
 $totalPages = ceil($totalOrders / $limit);
 ?>
 
@@ -109,18 +109,25 @@ $totalPages = ceil($totalOrders / $limit);
         .table-hover tbody tr:hover {
             background-color: #F2F2F2;
         }
-        .badge {
-            padding: 10px;
-            border-radius: 15px;
+
+        /* Status text styles */
+        .status-success {
+            color: #27AE60; /* Green for delivered */
+            font-weight: bold;
         }
-        .badge-success {
-            background-color: #27AE60;
-            color: white;
+        .status-danger {
+            color: #E74C3C; /* Red for canceled */
+            font-weight: bold;
         }
-        .badge-danger {
-            background-color: #E74C3C;
-            color: white;
+        .status-warning {
+            color: #F39C12; /* Orange for pending */
+            font-weight: bold;
         }
+        .status-info {
+            color: #3498DB; /* Blue for picked up */
+            font-weight: bold;
+        }
+
         .pagination .page-link {
             color: #3498DB;
         }
@@ -136,7 +143,7 @@ $totalPages = ceil($totalOrders / $limit);
     <nav class="navbar navbar-expand-lg">
         <a class="navbar-brand" href="#">Rindra Delivery Service - Admin Panel</a>
         <div class="navbar-nav">
-            <a href="http://localhost/rindra_delivery_service/views/admin/dashboard.php" class="btn-back-dashboard">Back to Dashboard</a>
+            <a href="http://localhost/rindra_delivery_service/views/admin/dashboard.php" class="btn-back-dashboard">Back</a>
             <a href="../../public/logout.php" class="logout-btn">Logout</a>
         </div>
     </nav>
@@ -151,8 +158,7 @@ $totalPages = ceil($totalOrders / $limit);
             <select name="status" class="form-control mr-2">
                 <option value="">All Statuses</option>
                 <option value="pending" <?= ($filterStatus == 'pending') ? 'selected' : '' ?>>Pending</option>
-                <option value="delivered" <?= ($filterStatus == 'delivered') ? 'selected' : '' ?>>Delivered</option>
-                <option value="canceled" <?= ($filterStatus == 'canceled') ? 'selected' : '' ?>>Canceled</option>
+                <option value="picked up" <?= ($filterStatus == 'picked up') ? 'selected' : '' ?>>Picked Up</option>
             </select>
             
             <select name="driver" class="form-control mr-2">
@@ -175,7 +181,7 @@ $totalPages = ceil($totalOrders / $limit);
                     <tr>
                         <th>#</th>
                         <th>Order ID</th>
-                        <th>Client Name</th> <!-- Added Client Name -->
+                        <th>Client Name</th>
                         <th>Driver ID</th>
                         <th>Address</th>
                         <th>Order Date</th>
@@ -184,18 +190,18 @@ $totalPages = ceil($totalOrders / $limit);
                 </thead>
                 <tbody>
                     <?php
-                    $counter = ($page - 1) * $limit + 1;  // For numbering rows
+                    $counter = ($page - 1) * $limit + 1;
                     foreach ($orderHistory as $order): ?>
                         <tr>
-                            <td><?= $counter++; ?></td> <!-- Increment row number -->
+                            <td><?= $counter++; ?></td>
                             <td><?= $order['id']; ?></td>
                             <td><?= $order['client_name']; ?></td>
                             <td><?= $order['driver_id'] ?: 'Not Assigned'; ?></td>
                             <td><?= $order['address']; ?></td>
-                            <td><?= date('Y-m-d', strtotime($order['created_at'])); ?></td> <!-- Display order date -->
+                            <td><?= date('Y-m-d', strtotime($order['created_at'])); ?></td>
                             <td>
                                 <?php $status = $order['status']; ?>
-                                <span class="badge <?= ($status == 'delivered') ? 'badge-success' : 'badge-danger'; ?>">
+                                <span class="<?= ($status == 'picked up') ? 'status-info' : 'status-warning'; ?>">
                                     <?= ucfirst($status) ?>
                                 </span>
                             </td>
@@ -207,7 +213,6 @@ $totalPages = ceil($totalOrders / $limit);
             <!-- Pagination Controls -->
             <nav aria-label="Page navigation">
                 <ul class="pagination justify-content-center">
-                    <!-- Previous button -->
                     <?php if ($page > 1): ?>
                         <li class="page-item">
                             <a class="page-link" href="?page=<?= $page - 1 ?>&search_client=<?= $searchClient ?>&status=<?= $filterStatus ?>&driver=<?= $filterDriver ?>" aria-label="Previous">
@@ -216,14 +221,12 @@ $totalPages = ceil($totalOrders / $limit);
                         </li>
                     <?php endif; ?>
 
-                    <!-- Page numbers -->
                     <?php for ($i = 1; $i <= $totalPages; $i++): ?>
                         <li class="page-item <?= ($i == $page) ? 'active' : '' ?>">
                             <a class="page-link" href="?page=<?= $i ?>&search_client=<?= $searchClient ?>&status=<?= $filterStatus ?>&driver=<?= $filterDriver ?>"><?= $i ?></a>
                         </li>
                     <?php endfor; ?>
 
-                    <!-- Next button -->
                     <?php if ($page < $totalPages): ?>
                         <li class="page-item">
                             <a class="page-link" href="?page=<?= $page + 1 ?>&search_client=<?= $searchClient ?>&status=<?= $filterStatus ?>&driver=<?= $filterDriver ?>" aria-label="Next">

@@ -18,8 +18,8 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $limit;
 
 // Fetch client order history with pagination
-$orderHistory = $client->getOrderHistory($_SESSION['user_id']);
-$totalOrders = count($orderHistory);
+$orderHistory = $client->getOrderHistory($_SESSION['user_id'], $limit, $offset);
+$totalOrders = count($client->getOrderHistory($_SESSION['user_id']));
 $totalPages = ceil($totalOrders / $limit);
 ?>
 
@@ -30,11 +30,86 @@ $totalPages = ceil($totalOrders / $limit);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
-        /* Add CSS styles */
+        body {
+            background: #F8F9FA; /* Light background */
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        .navbar {
+            background-color: #34495E; /* Matching dark blue-gray color */
+            padding: 15px 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .navbar-brand {
+            color: #fff;
+            font-weight: bold;
+        }
+        .nav-link {
+            color: #fff !important;
+        }
+        .container {
+            margin-top: 40px;
+            padding: 20px;
+            background-color: #FFFFFF;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .table {
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        .table thead {
+            background-color: #DC8449; /* Orange header color */
+            color: white;
+        }
+        .table-hover tbody tr:hover {
+            background-color: #f5f5f5; /* Slight hover effect */
+        }
+        .table td, .table th {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .welcome-text {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .badge {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        .logout-btn, .back-btn {
+            background-color: #34495E;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            color: #fff;
+        }
+        .logout-btn:hover, .back-btn:hover {
+            background-color: #1A242F;
+            color: white;
+        }
     </style>
     <title>Client Order History - Rindra Delivery Service</title>
 </head>
 <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg">
+        <a class="navbar-brand" href="#">Rindra Delivery Service</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a href="dashboard.php" class="btn back-btn">Back</a>
+                </li>
+                <li class="nav-item">
+                    <a href="../../public/logout.php" class="btn logout-btn">Logout</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
     <div class="container">
         <h2>Your Order History</h2>
         
@@ -55,7 +130,7 @@ $totalPages = ceil($totalOrders / $limit);
                             <td><?= $order['id']; ?></td>
                             <td><?= $order['address']; ?></td>
                             <td>
-                                <span class="badge <?= ($order['status'] == 'delivered') ? 'badge-success' : 'badge-warning'; ?>">
+                                <span class="badge <?= ($order['status'] == 'pending') ? 'badge-warning' : (($order['status'] == 'picked up') ? 'badge-info' : 'badge-success'); ?>">
                                     <?= ucfirst($order['status']) ?>
                                 </span>
                             </td>
