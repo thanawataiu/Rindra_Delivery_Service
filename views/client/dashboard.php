@@ -11,7 +11,18 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] != 'client') {
 $db = new Database();
 $conn = $db->getConnection();
 $client = new Client($conn);
-$orderHistory = $client->getOrderHistory();
+
+// Pagination setup
+$limit = 10;  // Number of records per page
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;  // Get the current page or default to 1
+$offset = ($page - 1) * $limit;  // Calculate offset
+
+// Fetch the client's order history with pagination
+$orderHistory = $client->getOrderHistory($_SESSION['user_id'], $limit, $offset);
+
+// Fetch the total number of orders to calculate total pages
+$totalOrders = count($client->getOrderHistory($_SESSION['user_id']));
+$totalPages = ceil($totalOrders / $limit);  // Calculate total pages
 ?>
 
 <!DOCTYPE html>
@@ -82,6 +93,19 @@ $orderHistory = $client->getOrderHistory();
             background-color: #1A242F;
             color: white;
         }
+        .btn-custom {
+            background-color: #34495E; /* Button color */
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 25px;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .btn-custom:hover {
+            background-color: #1A242F; /* Darker shade on hover */
+            transform: translateY(-2px); /* Slight lift effect */
+        }
     </style>
     <title>Client Dashboard - Rindra Delivery Service</title>
 </head>
@@ -100,7 +124,14 @@ $orderHistory = $client->getOrderHistory();
 
     <!-- Main Content -->
     <div class="container">
-        <h2 class="welcome-text">Welcome, <?= $_SESSION['user_id'] ?>! Here is your order history:</h2>
+        <h2 class="welcome-text">Welcome, <?= $_SESSION['user_id'] ?>!</h2>
+
+        <!-- Button to View Full Order History -->
+        <div class="mb-3 text-right">
+            <a href="view_order_history.php" class="btn btn-custom">View Full Order History</a>
+        </div>
+
+        <h3 class="welcome-text">Here is your most recent order history:</h3>
         
         <?php if (empty($orderHistory)) : ?>
             <div class="alert alert-warning text-center">No orders found in your history.</div>
@@ -143,6 +174,36 @@ $orderHistory = $client->getOrderHistory();
                     <?php endforeach; ?>
                 </tbody>
             </table>
+
+            <!-- Pagination Controls -->
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    <!-- Previous button -->
+                    <?php if ($page > 1): ?>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=<?= $page - 1 ?>" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+
+                    <!-- Page numbers -->
+                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                        <li class="page-item <?= ($i == $page) ? 'active' : '' ?>">
+                            <a class="page-link" href="?page=<?= $i ?>"><?= $i ?></a>
+                        </li>
+                    <?php endfor; ?>
+
+                    <!-- Next button -->
+                    <?php if ($page < $totalPages): ?>
+                        <li class="page-item">
+                            <a class="page-link" href="?page=<?= $page + 1 ?>" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </nav>
         <?php endif; ?>
     </div>
 </body>

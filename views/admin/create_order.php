@@ -48,12 +48,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             color: #FFC20E; /* Yellow color */
             font-weight: bold;
         }
-        .nav-link, .logout-btn {
-            color: #FFC20E !important; /* Yellow for links */
+        .navbar-nav {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
         }
-        .logout-btn:hover {
+        .nav-link, .btn-back-dashboard, .logout-btn {
+            color: #FFC20E !important; /* Yellow for links */
+            font-weight: bold;
+            margin-left: 15px;
+        }
+        .nav-link:hover, .btn-back-dashboard:hover, .logout-btn:hover {
             background-color: #1A242F;
             color: white;
+            text-decoration: none;
         }
         .container {
             margin-top: 40px;
@@ -104,12 +112,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <a class="navbar-brand" href="#">Rindra Delivery Service - Admin Panel</a>
-        <div class="collapse navbar-collapse">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <a href="../../public/logout.php" class="btn logout-btn">Logout</a>
-                </li>
-            </ul>
+        <div class="navbar-nav ml-auto">
+            <a href="http://localhost/rindra_delivery_service/views/admin/dashboard.php" class="btn-back-dashboard">Back</a>
+            <a href="../../public/logout.php" class="logout-btn">Logout</a>
         </div>
     </nav>
 

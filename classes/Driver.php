@@ -7,17 +7,50 @@ class Driver extends User {
         parent::__construct($db); // Inherit the database connection from User class
     }
 
-    // Method to fetch all orders assigned to the logged-in driver
-    public function getAssignedOrders() {
+    // Method to fetch all orders assigned to the logged-in driver (with pagination)
+    public function getAssignedOrders($limit = 10, $offset = 0) {
         try {
-            $query = "SELECT * FROM orders WHERE driver_id = :driver_id";
+            $query = "SELECT * FROM orders WHERE driver_id = :driver_id LIMIT :limit OFFSET :offset";
             $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(':driver_id', $_SESSION['user_id']); 
+            $stmt->bindParam(':driver_id', $_SESSION['user_id']);
+            $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);  // Add pagination limit
+            $stmt->bindParam(':offset', $offset, PDO::PARAM_INT); // Add pagination offset
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             echo "Error fetching assigned orders: " . $e->getMessage();
             return [];
+        }
+    }
+
+    // Method to fetch all completed orders (for driver's delivery history)
+    public function getCompletedOrders($limit = 10, $offset = 0) {
+        try {
+            $query = "SELECT * FROM orders WHERE driver_id = :driver_id AND status = 'delivered' LIMIT :limit OFFSET :offset";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':driver_id', $_SESSION['user_id']);
+            $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);  // Add pagination limit
+            $stmt->bindParam(':offset', $offset, PDO::PARAM_INT); // Add pagination offset
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            echo "Error fetching completed orders: " . $e->getMessage();
+            return [];
+        }
+    }
+
+    // Method to get the total number of completed orders for the driver
+    public function getTotalCompletedOrders() {
+        try {
+            $query = "SELECT COUNT(*) as total FROM orders WHERE driver_id = :driver_id AND status = 'delivered'";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':driver_id', $_SESSION['user_id']);
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $result['total'];
+        } catch (PDOException $e) {
+            echo "Error fetching total completed orders: " . $e->getMessage();
+            return 0;
         }
     }
 
@@ -36,4 +69,3 @@ class Driver extends User {
         }
     }
 }
-?>

@@ -18,27 +18,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $order_id = $_POST['order_id'];
     $driver_id = $_POST['driver_id'];
 
-    // Assign the driver to the order
+    // Assign the driver to the order and update status to 'in_progress'
     if ($admin->assignDriver($order_id, $driver_id)) {
         $success = "Driver assigned successfully!";
     } else {
-        $error = "Failed to assign driver.";
+        $error = "Failed to assign driver. Please ensure the order and driver are valid.";
     }
 }
 
 // Fetch available orders and drivers for the form
-$orderQuery = "SELECT id FROM orders WHERE driver_id IS NULL";
-$driverQuery = "SELECT id, name FROM users WHERE role = 'driver'";
-
-// Fetch orders
-$orderStmt = $conn->prepare($orderQuery);
-$orderStmt->execute();
-$availableOrders = $orderStmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Fetch drivers
-$driverStmt = $conn->prepare($driverQuery);
-$driverStmt->execute();
-$availableDrivers = $driverStmt->fetchAll(PDO::FETCH_ASSOC);
+$availableOrders = $admin->getPendingOrders();
+$availableDrivers = $admin->getAllDrivers();
 ?>
 
 <!DOCTYPE html>
@@ -49,57 +39,69 @@ $availableDrivers = $driverStmt->fetchAll(PDO::FETCH_ASSOC);
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
-            background: linear-gradient(135deg, #34495E, #2C3E50); /* Cool gradient background */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
+            background: linear-gradient(135deg, #34495E, #2C3E50);
             margin: 0;
+            padding: 0;
             font-family: Arial, sans-serif;
             color: white;
+        }
+        .navbar {
+            background-color: #2C3E50;
+            padding: 15px 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        .navbar-brand {
+            color: #FFC20E;
+            font-weight: bold;
+        }
+        .nav-link, .logout-btn {
+            color: #FFC20E !important;
+        }
+        .logout-btn:hover {
+            background-color: #1A242F;
+            color: white;
+        }
+        .btn-back {
+            color: #FFC20E !important;
         }
         .container {
             background-color: #fff;
             padding: 40px;
             border-radius: 15px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2), 0 0 10px #FFC20E; /* Thin yellow shadow */
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2), 0 0 10px #FFC20E;
             width: 100%;
-            max-width: 500px; /* Slightly wider */
+            max-width: 500px;
             transition: transform 0.3s, box-shadow 0.3s;
+            margin-top: 50px; /* Added margin for the top */
         }
         .container:hover {
-            transform: translateY(-5px); /* Subtle lift effect */
+            transform: translateY(-5px);
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 12px #FFC20E;
         }
         h2 {
             margin-bottom: 20px;
-            color: #2C3E50; /* Dark color for heading */
+            color: #2C3E50;
             text-align: center;
             font-weight: bold;
         }
         .btn-custom {
-            background-color: #2C3E50; /* Button color */
+            background-color: #2C3E50;
             border: none;
             color: white;
             font-weight: bold;
-            padding: 10px 20px; 
+            padding: 10px 20px;
             border-radius: 25px;
             transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 0 5px #FFC20E; /* Thin yellow shadow */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 0 5px #FFC20E;
         }
         .btn-custom:hover {
-            background-color: #1A242F; /* Darker shade on hover */
-            transform: translateY(-2px); /* Slight lift effect */
+            background-color: #1A242F;
+            transform: translateY(-2px);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3), 0 0 7px #FFC20E;
-        }
-        .btn-back {
-            margin-top: 15px;
-            display: block;
-            text-align: center;
         }
         .form-group label {
             color: #333;
-            font-weight: 600; /* Slightly bolder labels */
+            font-weight: 600;
         }
         .alert {
             text-align: center;
@@ -109,6 +111,21 @@ $availableDrivers = $driverStmt->fetchAll(PDO::FETCH_ASSOC);
     <title>Assign Driver - Rindra Delivery Service</title>
 </head>
 <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg">
+        <a class="navbar-brand" href="#">Rindra Delivery Service - Admin Panel</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a href="http://localhost/rindra_delivery_service/views/admin/dashboard.php" class="btn btn-back">Back</a>
+                </li>
+                <li class="nav-item">
+                    <a href="../../public/logout.php" class="btn logout-btn">Logout</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
     <div class="container">
         <h2>Assign Driver to Order</h2>
         <?php if (isset($success)) { echo "<div class='alert alert-success'>$success</div>"; } ?>
@@ -120,7 +137,7 @@ $availableDrivers = $driverStmt->fetchAll(PDO::FETCH_ASSOC);
                 <select name="order_id" id="order_id" class="form-control" required>
                     <option value="">Select Order</option>
                     <?php foreach ($availableOrders as $order): ?>
-                        <option value="<?= $order['id']; ?>"><?= $order['id']; ?></option>
+                        <option value="<?= $order['id']; ?>">Order #<?= $order['id']; ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -135,10 +152,6 @@ $availableDrivers = $driverStmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
             <button type="submit" class="btn btn-custom btn-block">Assign Driver</button>
         </form>
-        <!-- Back to Home Button -->
-        <div class="btn-back">
-            <a href="http://localhost/rindra_delivery_service/public/index.php" class="btn btn-custom">Back to Home</a>
-        </div>
     </div>
 </body>
 </html>

@@ -14,15 +14,16 @@ $driver = new Driver($conn);
 
 // Pagination setup
 $limit = 10;  // Number of records per page
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;  // Get the current page or default to 1
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;  // Get current page from URL or default to 1
 $offset = ($page - 1) * $limit;  // Calculate offset
 
-// Fetch assigned orders with pagination
-$assignedOrders = $driver->getAssignedOrders($limit, $offset);
+// Fetch total number of completed orders to calculate total pages
+$totalOrders = $driver->getTotalCompletedOrders(); // Separate method to get total count of completed orders
+$totalPages = ceil($totalOrders / $limit);  // Total number of pages
 
-// Fetch total assigned orders for pagination calculation
-$totalAssignedOrders = count($driver->getAssignedOrders());
-$totalPages = ceil($totalAssignedOrders / $limit);
+// Fetch completed orders with pagination
+$completedOrders = $driver->getCompletedOrders($limit, $offset); // Use limit and offset to paginate
+
 ?>
 
 <!DOCTYPE html>
@@ -31,25 +32,15 @@ $totalPages = ceil($totalAssignedOrders / $limit);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <style>
-        /* Your existing styles */
-    </style>
-    <title>Assigned Orders - Rindra Delivery Service</title>
+    <title>Driver Delivery History - Rindra Delivery Service</title>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg">
-        <!-- Navbar content -->
-    </nav>
-
-    <!-- Main Content -->
     <div class="container">
-        <h1 class="text-center">Assigned Orders</h1>
-        
-        <?php if (empty($assignedOrders)): ?>
-            <div class="alert alert-warning text-center">You have no assigned orders at the moment.</div>
-        <?php else: ?>
-            <table class="table table-striped table-hover">
+        <h2>Your Delivery History</h2>
+        <?php if (empty($completedOrders)) : ?>
+            <div class="alert alert-warning">No completed deliveries.</div>
+        <?php else : ?>
+            <table class="table table-striped">
                 <thead>
                     <tr>
                         <th>Order ID</th>
@@ -59,32 +50,12 @@ $totalPages = ceil($totalAssignedOrders / $limit);
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($assignedOrders as $order): ?>
+                    <?php foreach ($completedOrders as $order): ?>
                         <tr>
-                            <td><?= htmlspecialchars($order['id']); ?></td>
-                            <td><?= htmlspecialchars($order['client_id']); ?></td>
-                            <td><?= htmlspecialchars($order['address']); ?></td>
-                            <td>
-                                <?php
-                                $status = htmlspecialchars($order['status']);
-                                $badgeClass = '';
-                                switch ($status) {
-                                    case 'pending':
-                                        $badgeClass = 'badge-warning';
-                                        break;
-                                    case 'picked up':
-                                        $badgeClass = 'badge-info';
-                                        break;
-                                    case 'delivered':
-                                        $badgeClass = 'badge-success';
-                                        break;
-                                    default:
-                                        $badgeClass = 'badge-secondary';
-                                        break;
-                                }
-                                ?>
-                                <span class="badge <?= $badgeClass ?>"><?= ucfirst($status) ?></span>
-                            </td>
+                            <td><?= $order['id']; ?></td>
+                            <td><?= $order['client_id']; ?></td>
+                            <td><?= $order['address']; ?></td>
+                            <td><span class="badge badge-success">Delivered</span></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -120,9 +91,6 @@ $totalPages = ceil($totalAssignedOrders / $limit);
                 </ul>
             </nav>
         <?php endif; ?>
-
-        <!-- Back to Dashboard Button -->
-        <a href="dashboard.php" class="btn btn-custom btn-block">Back to Dashboard</a>
     </div>
 </body>
 </html>
